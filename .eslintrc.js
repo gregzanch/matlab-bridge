@@ -2,10 +2,10 @@ module.exports = {
   root: true,
   parser: '@typescript-eslint/parser',
   plugins: ['@typescript-eslint', 'node', 'prettier'],
-  parserOptions: {
-    tsconfigRootDir: __dirname,
-    project: ['./tsconfig.json'],
-  },
+  // parserOptions: {
+  //   tsconfigRootDir: __dirname,
+  //   project: ['./tsconfig.json'],
+  // },
   extends: [
     'eslint:recommended',
     'plugin:node/recommended',
@@ -22,7 +22,7 @@ module.exports = {
     'node/no-missing-require': 'off',
     'node/shebang': 'off',
     '@typescript-eslint/no-use-before-define': 'off',
-    quotes: ['warn', 'single', { avoidEscape: true }],
+    quotes: ['off', 'single', { avoidEscape: true }],
     'node/no-unpublished-import': 'off',
     '@typescript-eslint/no-unsafe-assignment': 'off',
     '@typescript-eslint/no-var-requires': 'off',

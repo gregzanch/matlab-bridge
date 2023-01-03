@@ -1,13 +1,10 @@
-import { myPackage } from '../src';
+import { MatlabSession } from '../src';
 
 describe('index', () => {
-  describe('myPackage', () => {
-    it('should return a string containing the message', () => {
-      const message = 'Hello';
-
-      const result = myPackage(message);
-
-      expect(result).toMatch(message);
+  describe('MatlabSession', () => {
+    it('should return a truthy value', () => {
+      const session = new MatlabSession();
+      expect(session).toBeTruthy();
     });
   });
 });
