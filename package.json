@@ -1,7 +1,7 @@
 {
   "name": "matlab-bridge",
-  "version": "0.0.0-development",
-  "description": "A template for creating npm packages using TypeScript and VSCode",
+  "version": "0.0.1-development",
+  "description": "A bridge between MATLAB and Node.js",
   "main": "./lib/index.js",
   "files": [
     "lib/**/*"

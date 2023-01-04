@@ -34,7 +34,7 @@ export class MatlabSession {
   constructor(matlabPath?: string) {
     this.matlabPath = matlabPath || getMatlabPath();
     this.process = null;
-    this.tempDir = path.join(MatlabSession.DEFAULT_TEMP_PATH, guid('m'));
+    this.tempDir = MatlabSession.DEFAULT_TEMP_PATH;
   }
 
   async initialize(): Promise<boolean> {
@@ -68,8 +68,6 @@ export class MatlabSession {
     this.process?.kill();
   }
 
-  private createTempFile(source: string) {}
-
   async eval(code: string): Promise<string> {
     if (!this.initialized) {
       throw new Error('Matlab not initialized');
@@ -93,10 +91,17 @@ export class MatlabSession {
     });
   }
 
-  async evaluateScript(script: string): Promise<string> {
+  async evaluateScript(script: string, asJson = false): Promise<string> {
     const filePath = createTempFile(this.tempDir, script);
     console.log(filePath);
-    return await this.eval(`run('${filePath.slice(0, -2)}')`);
+    const result = await this.eval(`run('${filePath.slice(0, -2)}')`);
+    try {
+      return asJson ? (JSON.parse(result) as string) : result;
+    } catch (err) {
+      return result;
+    } finally {
+      execSync(`rm ${filePath}`);
+    }
   }
 
   async clearAll(): Promise<void> {
@@ -105,15 +110,24 @@ export class MatlabSession {
 
   async getWorkspace<T = any>(): Promise<T | string> {
     const scriptSource = `
-      who__temp__ignore=who;
-      for i=1:length(who__temp__ignore)
-          ws_dictionary__temp__ignore.(cell2mat(who__temp__ignore(i)))=eval(cell2mat(who__temp__ignore(i)));
+      who__tmp=who;
+      for i=1:length(who__tmp)
+        value = eval(cell2mat(who__tmp(i)));
+          try
+             js = jsonencode(value);
+          catch
+             js = false;
+          end
+          if ~js
+            value = 'could not encode';
+          end
+          ws_dict__temp.(cell2mat(who__tmp(i)))=value;
       end
       
-      disp(jsonencode(ws_dictionary__temp__ignore))
+      disp(jsonencode(ws_dict__temp))
       
-      clearvars -regexp ^who__temp__ignore$
-      clearvars -regexp ^ws_dictionary__temp__ignore$
+      clearvars -regexp ^who__tmp$
+      clearvars -regexp ^ws_dict__temp$
       clearvars -regexp ^i$
     `;
 

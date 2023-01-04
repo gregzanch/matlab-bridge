@@ -2,6 +2,8 @@
 
 Runs Matlab code in typescript/javascript
 
+[![NPM Version](https://badge.fury.io/js/esta.svg?style=flat)](https://npmjs.org/package/matlab-bridge)
+
 ## Overview
 
 This package acts as a middle man between node.js and Matlab. You can interact with Matlab through a `Session`, which is simply a wrapper around Matlab's REPL
@@ -26,7 +28,7 @@ Evaluating a block of code
 ```js
 const output = await session.evaluateScript(`
   a = linspace(1, 5, 5)';
-  b = a.*2;
+  b = a .* 2;
   result.a = a;
   result.b = b;
   jsonencode(result)
