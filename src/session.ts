@@ -30,11 +30,19 @@ export class MatlabSession {
   private tempDir: string;
 
   static DEFAULT_TEMP_PATH = `${homedir()}/.matlab-bridge/tmp`;
+  static DEFAULT_JSONLAB_PATH = `${homedir()}/.matlab-bridge/jsonlab`;
 
   constructor(matlabPath?: string) {
     this.matlabPath = matlabPath || getMatlabPath();
     this.process = null;
     this.tempDir = MatlabSession.DEFAULT_TEMP_PATH;
+  }
+
+  async addJsonlabPath(path: string) {
+    if (!existsSync(path)) {
+      throw new Error(`Path ${path} does not exist`);
+    }
+    await this.eval(`addpath('${path}')`);
   }
 
   async initialize(): Promise<boolean> {
@@ -66,6 +74,7 @@ export class MatlabSession {
 
   async close(): Promise<void> {
     this.process?.kill();
+    this.initialized = false;
   }
 
   async eval(code: string): Promise<string> {
@@ -110,25 +119,13 @@ export class MatlabSession {
 
   async getWorkspace<T = any>(): Promise<T | string> {
     const scriptSource = `
-      who__tmp=who;
-      for i=1:length(who__tmp)
-        value = eval(cell2mat(who__tmp(i)));
-          try
-             js = jsonencode(value);
-          catch
-             js = false;
-          end
-          if ~js
-            value = 'could not encode';
-          end
-          ws_dict__temp.(cell2mat(who__tmp(i)))=value;
+      who__tmp = who;
+      for i__tmp = 1:length(who__tmp)
+        value = eval(cell2mat(who__tmp(i__tmp)));
+        ws_dict__temp.(cell2mat(who__tmp(i__tmp))) = value;
       end
-      
-      disp(jsonencode(ws_dict__temp))
-      
-      clearvars -regexp ^who__tmp$
-      clearvars -regexp ^ws_dict__temp$
-      clearvars -regexp ^i$
+      disp(savejson('',ws_dict__temp))
+      clearvars who__tmp ws_dict__temp i__tmp;
     `;
 
     const output: string = await this.evaluateScript(scriptSource);
