@@ -22,6 +22,16 @@ function createTempFile(tempDir: string, source: string) {
   return filePath;
 }
 
+export type EvaluationResult<T> =
+  | {
+      result: T;
+      error: null;
+    }
+  | {
+      result: string;
+      error: string;
+    };
+
 export class MatlabSession {
   public initialized = false;
 
@@ -30,7 +40,6 @@ export class MatlabSession {
   private tempDir: string;
 
   static DEFAULT_TEMP_PATH = `${homedir()}/.matlab-bridge/tmp`;
-  static DEFAULT_JSONLAB_PATH = `${homedir()}/.matlab-bridge/jsonlab`;
 
   constructor(matlabPath?: string) {
     this.matlabPath = matlabPath || getMatlabPath();
@@ -38,11 +47,18 @@ export class MatlabSession {
     this.tempDir = MatlabSession.DEFAULT_TEMP_PATH;
   }
 
-  async addJsonlabPath(path: string) {
-    if (!existsSync(path)) {
-      throw new Error(`Path ${path} does not exist`);
-    }
-    await this.eval(`addpath('${path}')`);
+  async checkJsonlab(): Promise<boolean> {
+    const scriptSource = `
+      try
+        savejson('',struct());
+        disp('true');
+      catch
+        disp('false');
+      end
+    `;
+
+    const { result, error } = await this.evaluateScript<boolean>(scriptSource);
+    return result === true;
   }
 
   async initialize(): Promise<boolean> {
@@ -100,14 +116,21 @@ export class MatlabSession {
     });
   }
 
-  async evaluateScript(script: string, asJson = false): Promise<string> {
+  async evaluateScript<T>(script: string): Promise<EvaluationResult<T>> {
     const filePath = createTempFile(this.tempDir, script);
     console.log(filePath);
     const result = await this.eval(`run('${filePath.slice(0, -2)}')`);
     try {
-      return asJson ? (JSON.parse(result) as string) : result;
-    } catch (err) {
-      return result;
+      const parsed = JSON.parse(result) as T;
+      return {
+        result: parsed,
+        error: null,
+      };
+    } catch (err: any) {
+      return {
+        result,
+        error: err.message || err,
+      };
     } finally {
       execSync(`rm ${filePath}`);
     }
@@ -117,7 +140,7 @@ export class MatlabSession {
     await this.eval('clear all');
   }
 
-  async getWorkspace<T = any>(): Promise<T | string> {
+  async getWorkspace<T = any>(): Promise<EvaluationResult<T>> {
     const scriptSource = `
       who__tmp = who;
       for i__tmp = 1:length(who__tmp)
@@ -128,11 +151,6 @@ export class MatlabSession {
       clearvars who__tmp ws_dict__temp i__tmp;
     `;
 
-    const output: string = await this.evaluateScript(scriptSource);
-    try {
-      return JSON.parse(output) as T;
-    } catch (err) {
-      return output;
-    }
+    return await this.evaluateScript<T>(scriptSource);
   }
 }

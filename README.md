@@ -8,6 +8,10 @@ Runs Matlab code in typescript/javascript
 
 This package acts as a middle man between node.js and Matlab. You can interact with Matlab through a `Session`, which is simply a wrapper around Matlab's REPL
 
+## Prerequisites
+
+Before using `matlab-bridge`, you should have [jsonlab](https://github.com/fangq/jsonlab) installed as a Matlab toolbox. You can download the latest release from [jsonlab's release page](https://github.com/fangq/jsonlab/releases).
+
 ## Getting started
 
 Add `matlab-bridge` to your node.js project.
