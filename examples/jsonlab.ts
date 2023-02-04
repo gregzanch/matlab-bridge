@@ -5,7 +5,6 @@ async function main() {
 
   console.log('Initializing Matlab...');
   await session.initialize();
-  await session.addJsonlabPath(MatlabSession.DEFAULT_JSONLAB_PATH);
   console.log('Matlab initialized');
 
   const output = await session.evaluateScript(`
